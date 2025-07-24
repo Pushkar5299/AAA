@@ -229,6 +229,42 @@
                 <!-- Admin Products Section -->
                 <div id="admin-products-section" class="dashboard-section">
                     <h2>Product Management</h2>
+                    
+                    <!-- Upload Controls -->
+                    <div class="upload-controls">
+                        <div class="upload-section">
+                            <h3>Upload Stock Data</h3>
+                            <p class="upload-description">Upload CSV/Excel file with product stock information</p>
+                            <div class="upload-area">
+                                <input type="file" id="stock-upload" accept=".csv,.xlsx,.xls" class="file-input">
+                                <label for="stock-upload" class="file-label">
+                                    <span class="upload-icon">📁</span>
+                                    <span>Choose Stock File</span>
+                                </label>
+                                <button id="upload-stock-btn" class="btn btn--primary btn--sm" disabled>Upload Stock</button>
+                            </div>
+                            <div class="upload-format">
+                                <small>Expected format: Product Name, Quantity</small>
+                            </div>
+                        </div>
+                        
+                        <div class="upload-section">
+                            <h3>Upload Scheme Data</h3>
+                            <p class="upload-description">Upload CSV/Excel file with product scheme information</p>
+                            <div class="upload-area">
+                                <input type="file" id="scheme-upload" accept=".csv,.xlsx,.xls" class="file-input">
+                                <label for="scheme-upload" class="file-label">
+                                    <span class="upload-icon">📊</span>
+                                    <span>Choose Scheme File</span>
+                                </label>
+                                <button id="upload-scheme-btn" class="btn btn--secondary btn--sm" disabled>Upload Schemes</button>
+                            </div>
+                            <div class="upload-format">
+                                <small>Expected format: Product Name, Scheme1, Scheme2, Scheme3</small>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div id="admin-products-list"></div>
                 </div>
 
