@@ -1385,6 +1385,16 @@ select.form-control {
   .notification {
     min-width: auto;
   }
+  
+  .upload-controls {
+    grid-template-columns: 1fr;
+    padding: var(--space-16);
+  }
+  
+  .upload-area {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 @media (max-width: 480px) {

@@ -898,3 +898,234 @@ window.updateOrderStatus = updateOrderStatus;
 window.approveRetailer = approveRetailer;
 window.rejectRetailer = rejectRetailer;
 window.toggleRetailerStatus = toggleRetailerStatus;
+
+// File Upload Functionality
+let selectedStockFile = null;
+let selectedSchemeFile = null;
+
+function handleStockFileSelect(e) {
+    const file = e.target.files[0];
+    const uploadBtn = document.getElementById('upload-stock-btn');
+    const label = document.querySelector('label[for="stock-upload"] span:last-child');
+    
+    if (file) {
+        selectedStockFile = file;
+        uploadBtn.disabled = false;
+        label.textContent = file.name;
+        console.log('Stock file selected:', file.name);
+    } else {
+        selectedStockFile = null;
+        uploadBtn.disabled = true;
+        label.textContent = 'Choose Stock File';
+    }
+}
+
+function handleSchemeFileSelect(e) {
+    const file = e.target.files[0];
+    const uploadBtn = document.getElementById('upload-scheme-btn');
+    const label = document.querySelector('label[for="scheme-upload"] span:last-child');
+    
+    if (file) {
+        selectedSchemeFile = file;
+        uploadBtn.disabled = false;
+        label.textContent = file.name;
+        console.log('Scheme file selected:', file.name);
+    } else {
+        selectedSchemeFile = null;
+        uploadBtn.disabled = true;
+        label.textContent = 'Choose Scheme File';
+    }
+}
+
+async function uploadStockData() {
+    if (!selectedStockFile) {
+        showNotification('Please select a stock file first', 'error');
+        return;
+    }
+    
+    const uploadBtn = document.getElementById('upload-stock-btn');
+    const originalText = uploadBtn.textContent;
+    
+    try {
+        uploadBtn.textContent = 'Uploading...';
+        uploadBtn.disabled = true;
+        
+        // Simulate file processing
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const fileContent = await readFileAsText(selectedStockFile);
+        const stockUpdates = parseStockData(fileContent);
+        
+        if (stockUpdates.length === 0) {
+            throw new Error('No valid stock data found in file');
+        }
+        
+        // Update product quantities
+        let updatedCount = 0;
+        stockUpdates.forEach(update => {
+            const product = products.find(p => 
+                p.name.toLowerCase().includes(update.name.toLowerCase()) ||
+                update.name.toLowerCase().includes(p.name.toLowerCase())
+            );
+            
+            if (product) {
+                product.quantity = parseInt(update.quantity) || 0;
+                updatedCount++;
+            }
+        });
+        
+        // Refresh displays
+        renderProducts();
+        renderAdminProducts();
+        renderAdminReports();
+        
+        showNotification(`Stock updated for ${updatedCount} products`, 'success');
+        
+        // Reset file input
+        document.getElementById('stock-upload').value = '';
+        selectedStockFile = null;
+        document.querySelector('label[for="stock-upload"] span:last-child').textContent = 'Choose Stock File';
+        
+    } catch (error) {
+        console.error('Stock upload error:', error);
+        showNotification(`Upload failed: ${error.message}`, 'error');
+    } finally {
+        uploadBtn.textContent = originalText;
+        uploadBtn.disabled = true;
+    }
+}
+
+async function uploadSchemeData() {
+    if (!selectedSchemeFile) {
+        showNotification('Please select a scheme file first', 'error');
+        return;
+    }
+    
+    const uploadBtn = document.getElementById('upload-scheme-btn');
+    const originalText = uploadBtn.textContent;
+    
+    try {
+        uploadBtn.textContent = 'Uploading...';
+        uploadBtn.disabled = true;
+        
+        // Simulate file processing
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const fileContent = await readFileAsText(selectedSchemeFile);
+        const schemeUpdates = parseSchemeData(fileContent);
+        
+        if (schemeUpdates.length === 0) {
+            throw new Error('No valid scheme data found in file');
+        }
+        
+        // Update product schemes
+        let updatedCount = 0;
+        schemeUpdates.forEach(update => {
+            const product = products.find(p => 
+                p.name.toLowerCase().includes(update.name.toLowerCase()) ||
+                update.name.toLowerCase().includes(p.name.toLowerCase())
+            );
+            
+            if (product) {
+                product.schemes = {
+                    scheme1: update.scheme1 || '',
+                    scheme2: update.scheme2 || '',
+                    scheme3: update.scheme3 || ''
+                };
+                updatedCount++;
+            }
+        });
+        
+        // Refresh displays
+        renderProducts();
+        renderAdminProducts();
+        renderSchemes();
+        
+        showNotification(`Schemes updated for ${updatedCount} products`, 'success');
+        
+        // Reset file input
+        document.getElementById('scheme-upload').value = '';
+        selectedSchemeFile = null;
+        document.querySelector('label[for="scheme-upload"] span:last-child').textContent = 'Choose Scheme File';
+        
+    } catch (error) {
+        console.error('Scheme upload error:', error);
+        showNotification(`Upload failed: ${error.message}`, 'error');
+    } finally {
+        uploadBtn.textContent = originalText;
+        uploadBtn.disabled = true;
+    }
+}
+
+function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = e => reject(new Error('Failed to read file'));
+        reader.readAsText(file);
+    });
+}
+
+function parseStockData(content) {
+    const lines = content.split('\n').filter(line => line.trim());
+    const updates = [];
+    
+    // Skip header if present
+    const startIndex = lines[0].toLowerCase().includes('product') || lines[0].toLowerCase().includes('name') ? 1 : 0;
+    
+    for (let i = startIndex; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        // Handle both CSV and tab-separated values
+        const parts = line.split(/[,\t]/).map(part => part.trim().replace(/"/g, ''));
+        
+        if (parts.length >= 2) {
+            const name = parts[0];
+            const quantity = parts[1];
+            
+            if (name && !isNaN(quantity)) {
+                updates.push({
+                    name: name,
+                    quantity: parseInt(quantity)
+                });
+            }
+        }
+    }
+    
+    return updates;
+}
+
+function parseSchemeData(content) {
+    const lines = content.split('\n').filter(line => line.trim());
+    const updates = [];
+    
+    // Skip header if present
+    const startIndex = lines[0].toLowerCase().includes('product') || lines[0].toLowerCase().includes('name') ? 1 : 0;
+    
+    for (let i = startIndex; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        // Handle both CSV and tab-separated values
+        const parts = line.split(/[,\t]/).map(part => part.trim().replace(/"/g, ''));
+        
+        if (parts.length >= 2) {
+            const name = parts[0];
+            const scheme1 = parts[1] || '';
+            const scheme2 = parts[2] || '';
+            const scheme3 = parts[3] || '';
+            
+            if (name) {
+                updates.push({
+                    name: name,
+                    scheme1: scheme1,
+                    scheme2: scheme2,
+                    scheme3: scheme3
+                });
+            }
+        }
+    }
+    
+    return updates;
+}
